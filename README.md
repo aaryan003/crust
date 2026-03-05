@@ -2,8 +2,6 @@
 
 <img src="docs/logo.png" alt="CRUST Logo" width="180" />
 
-# CRUST
-
 **A fully original, self-hosted version control system — built from scratch in Rust.**
 
 [![Build](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square&logo=github-actions)](.)
