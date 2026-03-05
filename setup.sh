@@ -26,7 +26,7 @@ echo "✅ All prerequisites found"
 # If not already inside the repo, clone it
 if [ ! -f "Cargo.toml" ]; then
   echo -e "\n${GREEN}▶ Cloning repository...${RESET}"
-  git clone https://github.com/bhaumiksoni/crust.git
+  git clone https://github.com/bhaumiksonii/crust.git
   cd crust
 fi
 
