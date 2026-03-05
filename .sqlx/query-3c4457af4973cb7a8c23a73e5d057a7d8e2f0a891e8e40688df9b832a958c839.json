@@ -1,0 +1,97 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE pull_requests\n           SET title       = COALESCE($1, title),\n               description = COALESCE($2, description),\n               state       = COALESCE($3, state),\n               updated_at  = NOW()\n           WHERE id = $4\n           RETURNING id, repo_id, number, title, description, author_id, state,\n                     head_ref, head_sha, base_ref, base_sha, created_at, updated_at",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "repo_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "number",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "title",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "author_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 6,
+        "name": "state",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 7,
+        "name": "head_ref",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 8,
+        "name": "head_sha",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 9,
+        "name": "base_ref",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 10,
+        "name": "base_sha",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 11,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 12,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Text",
+        "Varchar",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "3c4457af4973cb7a8c23a73e5d057a7d8e2f0a891e8e40688df9b832a958c839"
+}

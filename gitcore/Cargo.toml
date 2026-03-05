@@ -1,0 +1,22 @@
+[package]
+name = "gitcore"
+version.workspace = true
+edition.workspace = true
+description = "CRUST VCS core library - pure Rust object model with no async/network/database"
+
+[dependencies]
+sha2.workspace = true
+hex.workspace = true
+zstd.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+
+[dev-dependencies]
+tempfile = "3.8"
+
+[lib]
+name = "gitcore"
+path = "src/lib.rs"

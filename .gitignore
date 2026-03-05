@@ -1,0 +1,54 @@
+# .gitignore for CRUST
+
+# Rust build artifacts
+/target/
+Cargo.lock
+**/*.rs.bk
+*.pdb
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.env.local
+.env.*.local
+
+# Environment
+.env
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# CRUST-specific
+.crust/
+~/.crust/credentials
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+dump.sql
+
+# Temporary
+tmp/
+temp/
+*.tmp
+
+# OS
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# Documentation
+target/doc/
+site/
+
+# Test artifacts
+test-repos/
+test-*.crust/

@@ -1,0 +1,722 @@
+{
+  "info": {
+    "name": "CRUST API",
+    "_postman_id": "crust-api-v1",
+    "description": "Complete API collection for CRUST — a self-hosted version control system.\n\n**Setup:**\n1. Set the `base_url` variable to your server (default: `http://localhost:8080`)\n2. Run `POST /auth/register` or `POST /auth/login` — the token is auto-saved to `{{token}}`\n3. All authenticated requests use `{{token}}` automatically\n\n**Variables:**\n- `base_url` — server base URL\n- `token` — JWT (auto-set by login/register)\n- `owner` — repo owner username\n- `repo` — repo name\n- `pr_number` — pull request number\n- `org` — organization name\n- `team` — team name",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8080", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "owner", "value": "alice", "type": "string" },
+    { "key": "repo", "value": "my-project", "type": "string" },
+    { "key": "pr_number", "value": "1", "type": "string" },
+    { "key": "org", "value": "acme-corp", "type": "string" },
+    { "key": "team", "value": "backend", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Check server health. No auth required."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"status\": \"ok\",\n  \"database\": \"ok\",\n  \"disk\": \"ok\",\n  \"uptime_seconds\": 86400\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.success && json.data && json.data.token) {",
+                  "    pm.collectionVariables.set('token', json.data.token);",
+                  "    console.log('Token saved:', json.data.token.substring(0, 20) + '...');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"alice\",\n  \"email\": \"alice@example.com\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "register"]
+            },
+            "description": "Register a new user account. Token is auto-saved to `{{token}}`."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.success && json.data && json.data.token) {",
+                  "    pm.collectionVariables.set('token', json.data.token);",
+                  "    console.log('Token saved:', json.data.token.substring(0, 20) + '...');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"alice\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Authenticate and receive a JWT. Token is auto-saved to `{{token}}`."
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "" },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "logout"]
+            },
+            "description": "Revoke current JWT. Returns 204 No Content."
+          }
+        },
+        {
+          "name": "Me (Current User)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "me"]
+            },
+            "description": "Get the authenticated user's profile."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get User Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{owner}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "{{owner}}"]
+            },
+            "description": "Get public profile for any user. No auth required."
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"display_name\": \"Alice J. Smith\",\n  \"password\": \"NewSecurePass456!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "me"]
+            },
+            "description": "Update own display name and/or password. Both fields are optional."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Repositories",
+      "item": [
+        {
+          "name": "Create Repository",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.success && json.data && json.data.name) {",
+                  "    pm.collectionVariables.set('repo', json.data.name);",
+                  "    console.log('Repo set to:', json.data.name);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"my-project\",\n  \"display_name\": \"My Project\",\n  \"description\": \"A cool CRUST project\",\n  \"is_public\": false,\n  \"default_branch\": \"main\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/repos",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "repos"]
+            },
+            "description": "Create a new repository. Repo name is auto-saved to `{{repo}}`."
+          }
+        },
+        {
+          "name": "Get Repository",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/repos/{{owner}}/{{repo}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "repos", "{{owner}}", "{{repo}}"]
+            },
+            "description": "Get repository metadata. Auth optional for public repos."
+          }
+        },
+        {
+          "name": "Update Repository",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"display_name\": \"My Updated Project\",\n  \"description\": \"Now with better documentation\",\n  \"is_public\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/repos/{{owner}}/{{repo}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "repos", "{{owner}}", "{{repo}}"]
+            },
+            "description": "Update repo settings. Owner only."
+          }
+        },
+        {
+          "name": "Delete Repository",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/repos/{{owner}}/{{repo}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "repos", "{{owner}}", "{{repo}}"]
+            },
+            "description": "Permanently delete a repository. Owner only. Returns 204."
+          }
+        },
+        {
+          "name": "List Refs (Branches & Tags)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/repos/{{owner}}/{{repo}}/refs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "repos", "{{owner}}", "{{repo}}", "refs"]
+            },
+            "description": "List all branch tips and tags. Returns `{heads: {name: sha}, tags: {name: sha}}`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Object Transport",
+      "description": "Low-level object upload/download endpoints used by `crust push`, `crust fetch`, and `crust clone`.",
+      "item": [
+        {
+          "name": "Preflight (Negotiate Objects)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"wants\": [\"d74320634a5019eaeb4bfd5444cbcd041f2d2834884b3bdf8f773fa215d7d89e\"],\n  \"haves\": []\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/repos/{{owner}}/{{repo}}/refs/preflight",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "repos", "{{owner}}", "{{repo}}", "refs", "preflight"]
+            },
+            "description": "Negotiate which objects need to be transferred. Send what you want and what you already have."
+          }
+        },
+        {
+          "name": "Fetch Objects (Download CRUSTPACK)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"wants\": [\"d74320634a5019eaeb4bfd5444cbcd041f2d2834884b3bdf8f773fa215d7d89e\"],\n  \"haves\": []\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/repos/{{owner}}/{{repo}}/objects/fetch",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "repos", "{{owner}}", "{{repo}}", "objects", "fetch"]
+            },
+            "description": "Download objects as binary CRUSTPACK. Server traverses the commit graph and returns all reachable objects (commits + trees + blobs). Response is `application/octet-stream`."
+          }
+        },
+        {
+          "name": "Upload Objects (Push CRUSTPACK)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/octet-stream" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<binary CRUSTPACK data>"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/repos/{{owner}}/{{repo}}/objects/upload",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "repos", "{{owner}}", "{{repo}}", "objects", "upload"]
+            },
+            "description": "Upload objects as binary CRUSTPACK. Use `crust push` — this endpoint is not meant for manual use."
+          }
+        },
+        {
+          "name": "Update Refs (After Push)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"updates\": [\n    {\n      \"ref_name\": \"refs/heads/main\",\n      \"old_sha\": \"31e84afda8b8b44b8557fb323229805fa3b30f3c6c1d8a7c320bbec40f04c9e9\",\n      \"new_sha\": \"d74320634a5019eaeb4bfd5444cbcd041f2d2834884b3bdf8f773fa215d7d89e\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/repos/{{owner}}/{{repo}}/refs/update",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "repos", "{{owner}}", "{{repo}}", "refs", "update"]
+            },
+            "description": "Atomically update branch refs after uploading objects. Called by `crust push` after a successful upload."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pull Requests",
+      "item": [
+        {
+          "name": "Create Pull Request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.success && json.data && json.data.number) {",
+                  "    pm.collectionVariables.set('pr_number', String(json.data.number));",
+                  "    console.log('PR number saved:', json.data.number);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Add authentication system\",\n  \"description\": \"Implements JWT-based login and register endpoints\",\n  \"head_ref\": \"feat/auth\",\n  \"base_ref\": \"main\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/repos/{{owner}}/{{repo}}/pulls",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "repos", "{{owner}}", "{{repo}}", "pulls"]
+            },
+            "description": "Open a pull request from `head_ref` into `base_ref`. PR number is auto-saved to `{{pr_number}}`."
+          }
+        },
+        {
+          "name": "List Pull Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/repos/{{owner}}/{{repo}}/pulls?state=open",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "repos", "{{owner}}", "{{repo}}", "pulls"],
+              "query": [
+                { "key": "state", "value": "open", "description": "open | merged | closed" },
+                { "key": "limit", "value": "20", "disabled": true }
+              ]
+            },
+            "description": "List PRs. Filter by `state=open|merged|closed`."
+          }
+        },
+        {
+          "name": "Get Pull Request",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/repos/{{owner}}/{{repo}}/pulls/{{pr_number}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "repos", "{{owner}}", "{{repo}}", "pulls", "{{pr_number}}"]
+            },
+            "description": "Get a single pull request by number."
+          }
+        },
+        {
+          "name": "Update Pull Request",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated PR title\",\n  \"description\": \"Updated description\",\n  \"state\": \"closed\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/repos/{{owner}}/{{repo}}/pulls/{{pr_number}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "repos", "{{owner}}", "{{repo}}", "pulls", "{{pr_number}}"]
+            },
+            "description": "Update title, description, or close the PR. Author or repo owner only."
+          }
+        },
+        {
+          "name": "Post Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"state\": \"approved\",\n  \"body\": \"Looks great! Good work.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/repos/{{owner}}/{{repo}}/pulls/{{pr_number}}/reviews",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "repos", "{{owner}}", "{{repo}}", "pulls", "{{pr_number}}", "reviews"]
+            },
+            "description": "Post a review. `state` can be `approved`, `changes_requested`, or `commented`."
+          }
+        },
+        {
+          "name": "Post Inline Comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"file_path\": \"src/auth.rs\",\n  \"line_number\": 42,\n  \"body\": \"This function should return a Result instead of panicking.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/repos/{{owner}}/{{repo}}/pulls/{{pr_number}}/comments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "repos", "{{owner}}", "{{repo}}", "pulls", "{{pr_number}}", "comments"]
+            },
+            "description": "Post an inline comment on a specific file and line."
+          }
+        },
+        {
+          "name": "Merge Pull Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/repos/{{owner}}/{{repo}}/pulls/{{pr_number}}/merge",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "repos", "{{owner}}", "{{repo}}", "pulls", "{{pr_number}}", "merge"]
+            },
+            "description": "Merge the pull request. Requires write permission on the repo."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Organizations",
+      "item": [
+        {
+          "name": "Create Organization",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.success && json.data && json.data.name) {",
+                  "    pm.collectionVariables.set('org', json.data.name);",
+                  "    console.log('Org set to:', json.data.name);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"acme-corp\",\n  \"display_name\": \"Acme Corporation\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/orgs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "orgs"]
+            },
+            "description": "Create a new organization. Org name is auto-saved to `{{org}}`."
+          }
+        },
+        {
+          "name": "Get Organization",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/orgs/{{org}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "orgs", "{{org}}"]
+            },
+            "description": "Get organization details. No auth required."
+          }
+        },
+        {
+          "name": "Add Member to Org",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/orgs/{{org}}/members/bob",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "orgs", "{{org}}", "members", "bob"]
+            },
+            "description": "Add user `bob` to the organization. Org owner only."
+          }
+        },
+        {
+          "name": "Remove Member from Org",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/orgs/{{org}}/members/bob",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "orgs", "{{org}}", "members", "bob"]
+            },
+            "description": "Remove user `bob` from the organization. Returns 204."
+          }
+        },
+        {
+          "name": "List Org Members",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/orgs/{{org}}/members",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "orgs", "{{org}}", "members"]
+            },
+            "description": "List all members. No auth required."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Teams",
+      "item": [
+        {
+          "name": "Create Team",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.success && json.data && json.data.name) {",
+                  "    pm.collectionVariables.set('team', json.data.name);",
+                  "    console.log('Team set to:', json.data.name);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"backend\",\n  \"display_name\": \"Backend Team\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/orgs/{{org}}/teams",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "orgs", "{{org}}", "teams"]
+            },
+            "description": "Create a team inside the organization. Team name is auto-saved to `{{team}}`."
+          }
+        },
+        {
+          "name": "List Teams",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/orgs/{{org}}/teams",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "orgs", "{{org}}", "teams"]
+            },
+            "description": "List all teams in an organization."
+          }
+        },
+        {
+          "name": "Grant Team Repo Access",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permission\": \"read\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/orgs/{{org}}/teams/{{team}}/repos/{{owner}}/{{repo}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "orgs", "{{org}}", "teams", "{{team}}", "repos", "{{owner}}", "{{repo}}"]
+            },
+            "description": "Give team read/write/admin access to a repo. `permission`: `read` | `write` | `admin`."
+          }
+        },
+        {
+          "name": "Add Member to Team",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/orgs/{{org}}/teams/{{team}}/members/bob",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "orgs", "{{org}}", "teams", "{{team}}", "members", "bob"]
+            },
+            "description": "Add user `bob` to the team. Org owner only."
+          }
+        }
+      ]
+    }
+  ]
+}
