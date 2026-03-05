@@ -1,5 +1,6 @@
 // commit command - create a commit from staged changes
 
+use crate::commands::merge;
 use crate::index::Index;
 use crate::working_tree;
 use anyhow::{anyhow, Context, Result};
@@ -44,12 +45,19 @@ pub fn cmd_commit(message: Option<&str>) -> Result<()> {
 }
 
 fn cmd_commit_inner(repo_root: &str, message: Option<&str>) -> Result<()> {
+    // Check if this is a merge commit (MERGE_HEAD exists)
+    let merge_head = merge::read_merge_head(repo_root)?;
+    let merge_msg = merge::read_merge_msg(repo_root)?;
+
     let owned_message;
     let message_str: &str = if let Some(m) = message {
         if m.trim().is_empty() {
             return Err(anyhow!("Commit message cannot be empty"));
         }
         m
+    } else if let Some(ref mm) = merge_msg {
+        // Use MERGE_MSG as default message for merge commits
+        mm.as_str()
     } else {
         // Try to read from stdin (supports `crust commit` with piped input or interactive prompt)
         print!("Commit message: ");
@@ -120,6 +128,11 @@ fn cmd_commit_inner(repo_root: &str, message: Option<&str>) -> Result<()> {
         commit_content.extend_from_slice(format!("parent {}\n", parent_id).as_bytes());
     }
 
+    // If this is a merge commit, add the second parent from MERGE_HEAD
+    if let Some(ref merge_parent) = merge_head {
+        commit_content.extend_from_slice(format!("parent {}\n", merge_parent).as_bytes());
+    }
+
     // Author and committer (default to "Unknown")
     commit_content
         .extend_from_slice(format!("author Unknown <unknown> {} +0000\n", timestamp).as_bytes());
@@ -151,8 +164,17 @@ fn cmd_commit_inner(repo_root: &str, message: Option<&str>) -> Result<()> {
     let branch = working_tree::get_current_branch(repo_root)?;
     let files_changed = index.entries().len();
 
-    println!("[{} {}] {}", branch, &commit_id[..7], message);
+    if merge_head.is_some() {
+        println!("[{} {}] (merge) {}", branch, &commit_id[..7], message);
+    } else {
+        println!("[{} {}] {}", branch, &commit_id[..7], message);
+    }
     println!(" {} files changed", files_changed);
+
+    // Clean up merge state files if this was a merge commit
+    if merge_head.is_some() {
+        merge::clean_merge_state(repo_root);
+    }
 
     // Keep index in sync with the committed tree (mirrors HEAD after commit)
     // This ensures `crust status` shows a clean state right after commit,

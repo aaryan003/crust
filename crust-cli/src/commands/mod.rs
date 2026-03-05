@@ -39,6 +39,7 @@ pub use login::cmd_login;
 pub use logout::cmd_logout;
 pub use ls_tree::cmd_ls_tree;
 pub use merge::cmd_merge;
+// cmd_merge_abort is called directly via commands::merge::cmd_merge_abort() in main.rs
 pub use pull::cmd_pull;
 pub use push::cmd_push;
 pub use remote::{cmd_remote_add, cmd_remote_list, cmd_remote_remove, cmd_remote_rename, cmd_remote_set_url};

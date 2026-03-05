@@ -143,9 +143,13 @@ enum Commands {
 
     /// Merge another branch into current branch
     Merge {
-        /// Branch to merge
-        #[arg(value_name = "BRANCH")]
-        branch: String,
+        /// Branch to merge (required unless --abort is used)
+        #[arg(value_name = "BRANCH", required_unless_present = "abort")]
+        branch: Option<String>,
+
+        /// Abort an in-progress merge
+        #[arg(long)]
+        abort: bool,
     },
 
     /// Create a new commit
@@ -356,7 +360,13 @@ fn main() {
             }
         }
 
-        Some(Commands::Merge { branch }) => commands::cmd_merge(&branch),
+        Some(Commands::Merge { branch, abort }) => {
+            if abort {
+                commands::merge::cmd_merge_abort()
+            } else {
+                commands::cmd_merge(branch.as_deref().unwrap())
+            }
+        }
 
         Some(Commands::Commit { message }) => commands::cmd_commit(message.as_deref()),
 
