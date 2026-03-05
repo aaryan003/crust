@@ -74,6 +74,12 @@ echo "fn main() {}" > src/main.rs
 crust add src/main.rs
 crust commit -m "Initial commit"
 
+# Create the repo on the server first (API-only for now)
+curl -X POST http://localhost:8080/api/v1/repos \
+  -H "Authorization: Bearer <your-token>" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "my-project", "display_name": "My Project", "is_public": true}'
+
 # Connect to remote and push
 crust remote add origin http://localhost:8080/alice/my-project
 crust push
