@@ -1,11 +1,12 @@
 // status command - show working tree status
 
 use crate::commands::checkout::{load_blob_content, load_tree_entries, load_tree_id_from_commit};
+use crate::commands::merge;
 use crate::index::Index;
 use crate::working_tree;
 use anyhow::{anyhow, Result};
 use sha2::{Digest, Sha256};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
@@ -39,6 +40,27 @@ pub fn cmd_status() -> Result<()> {
         .collect();
 
     println!("On branch {}\n", branch);
+
+    // Show merge-in-progress banner if MERGE_HEAD exists
+    if merge::is_merge_in_progress(repo_root) {
+        println!("You are in the middle of a merge.");
+        println!("  (fix conflicts and run \"crust commit\" to conclude merge)");
+        println!("  (use \"crust merge --abort\" to abort the merge)");
+
+        // Show conflicted files if MERGE_CONFLICTS exists
+        let conflicts_path = format!("{}/.crust/MERGE_CONFLICTS", repo_root);
+        if let Ok(content) = fs::read_to_string(&conflicts_path) {
+            let conflict_files: Vec<&str> = content.lines().filter(|l| !l.is_empty()).collect();
+            if !conflict_files.is_empty() {
+                println!();
+                println!("Unmerged paths:");
+                for f in &conflict_files {
+                    println!("  both modified:   {}", f);
+                }
+            }
+        }
+        println!();
+    }
 
     // ── Staged changes: index vs HEAD ──────────────────────────────────────
     let mut staged: Vec<(String, &str)> = Vec::new();

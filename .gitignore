@@ -44,9 +44,13 @@ temp/
 .LSOverride
 Thumbs.db
 
-# Documentation
+# Documentation build output
 target/doc/
 site/
+
+# Root-level markdown files (keep README.md, docs/, .github/)
+/*.md
+!README.md
 
 # Test artifacts
 test-repos/

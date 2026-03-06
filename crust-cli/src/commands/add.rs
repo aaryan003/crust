@@ -29,6 +29,14 @@ pub fn cmd_add(paths: &[String]) -> Result<()> {
 
         // Add each file to index
         for file in files {
+            // Warn if file still contains conflict markers
+            if has_conflict_markers(&file.content) {
+                eprintln!(
+                    "warning: {}: file still contains conflict markers (<<<<<<< / >>>>>>> )",
+                    file.path
+                );
+            }
+
             let blob_id = file.blob_id();
             let entry = IndexEntry {
                 path: file.path.clone(),
@@ -90,4 +98,16 @@ fn save_blob_object(repo_root: &str, blob_id: &str, file_path: &str) -> Result<(
     fs::write(&object_path, &compressed)?;
 
     Ok(())
+}
+
+/// Check if file content contains unresolved conflict markers
+fn has_conflict_markers(content: &[u8]) -> bool {
+    if let Ok(text) = std::str::from_utf8(content) {
+        for line in text.lines() {
+            if line.starts_with("<<<<<<<") || line.starts_with(">>>>>>>") {
+                return true;
+            }
+        }
+    }
+    false
 }

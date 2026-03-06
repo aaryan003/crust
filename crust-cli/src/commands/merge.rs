@@ -9,12 +9,102 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::Path;
 
+/// Check if a merge is currently in progress
+pub fn is_merge_in_progress(repo_root: &str) -> bool {
+    Path::new(&format!("{}/.crust/MERGE_HEAD", repo_root)).exists()
+}
+
+/// Read the MERGE_HEAD file (source commit ID for in-progress merge)
+pub fn read_merge_head(repo_root: &str) -> Result<Option<String>> {
+    let path = format!("{}/.crust/MERGE_HEAD", repo_root);
+    match fs::read_to_string(&path) {
+        Ok(content) => Ok(Some(content.trim().to_string())),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(e) => Err(e.into()),
+    }
+}
+
+/// Read the MERGE_MSG file (default merge commit message)
+pub fn read_merge_msg(repo_root: &str) -> Result<Option<String>> {
+    let path = format!("{}/.crust/MERGE_MSG", repo_root);
+    match fs::read_to_string(&path) {
+        Ok(content) => Ok(Some(content.trim().to_string())),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(e) => Err(e.into()),
+    }
+}
+
+/// Write merge state files when conflicts are detected
+fn write_merge_state(
+    repo_root: &str,
+    source_commit_id: &str,
+    source_branch: &str,
+    conflicts: &[String],
+) -> Result<()> {
+    // MERGE_HEAD — the source commit that is being merged
+    fs::write(
+        format!("{}/.crust/MERGE_HEAD", repo_root),
+        format!("{}\n", source_commit_id),
+    )?;
+    // MERGE_MSG — default commit message for when conflicts are resolved
+    fs::write(
+        format!("{}/.crust/MERGE_MSG", repo_root),
+        format!("Merge branch '{}'\n", source_branch),
+    )?;
+    // MERGE_CONFLICTS — list of conflicted file paths (one per line)
+    fs::write(
+        format!("{}/.crust/MERGE_CONFLICTS", repo_root),
+        conflicts.join("\n") + "\n",
+    )?;
+    Ok(())
+}
+
+/// Clean up merge state files after merge completes or is aborted
+pub fn clean_merge_state(repo_root: &str) {
+    let _ = fs::remove_file(format!("{}/.crust/MERGE_HEAD", repo_root));
+    let _ = fs::remove_file(format!("{}/.crust/MERGE_MSG", repo_root));
+    let _ = fs::remove_file(format!("{}/.crust/MERGE_CONFLICTS", repo_root));
+}
+
+/// Abort an in-progress merge — restore working tree to pre-merge HEAD state
+pub fn cmd_merge_abort() -> Result<()> {
+    let repo_root = ".";
+
+    if !Path::new(".crust").exists() {
+        return Err(anyhow!("CLI_NO_REPOSITORY: Not in a CRUST repository"));
+    }
+
+    if !is_merge_in_progress(repo_root) {
+        return Err(anyhow!("CLI_MERGE_IN_PROGRESS: No merge in progress to abort"));
+    }
+
+    // Restore working tree to current HEAD
+    let head_ref = working_tree::get_head_ref(repo_root)?;
+    if let Some(commit_id) = working_tree::read_ref(repo_root, &head_ref)? {
+        crate::commands::checkout::restore_working_tree_pub(repo_root, &commit_id)?;
+    }
+
+    // Clean up merge state files
+    clean_merge_state(repo_root);
+
+    println!("Merge aborted — working tree restored to HEAD.");
+    Ok(())
+}
+
 /// Merge another branch into current branch
 pub fn cmd_merge(source_branch: &str) -> Result<()> {
     let repo_root = ".";
 
     if !Path::new(".crust").exists() {
         return Err(anyhow!("CLI_NO_REPOSITORY: Not in a CRUST repository"));
+    }
+
+    // Guard: cannot start a new merge while one is in progress
+    if is_merge_in_progress(repo_root) {
+        return Err(anyhow!(
+            "CLI_MERGE_IN_PROGRESS: A merge is already in progress. \
+             Resolve conflicts and commit, or run 'crust merge --abort' to cancel."
+        ));
     }
 
     let current_branch = refs::get_current_branch(repo_root)?;
@@ -166,6 +256,9 @@ pub fn cmd_merge(source_branch: &str) -> Result<()> {
     }
 
     if !conflicts.is_empty() {
+        // Persist merge state so commit knows to create a 2-parent merge commit
+        write_merge_state(repo_root, &source_commit_id, source_branch, &conflicts)?;
+
         println!("CONFLICT (content): Merge conflict in:");
         for c in &conflicts {
             println!("  {}", c);
@@ -173,6 +266,7 @@ pub fn cmd_merge(source_branch: &str) -> Result<()> {
         println!();
         println!("Automatic merge failed; fix conflicts and then commit the result.");
         println!("  (use \"crust add <file>\" to mark resolved)");
+        println!("  (use \"crust merge --abort\" to abort the merge)");
         return Err(anyhow!("MERGE_CONFLICT: {} conflict(s) found", conflicts.len()));
     }
 
