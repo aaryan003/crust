@@ -1,0 +1,65 @@
+# .gitignore for CRUST
+
+# Rust build artifacts
+/target/
+**/*.rs.bk
+*.pdb
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.env.local
+.env.*.local
+
+# Environment
+.env
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# CRUST-specific
+.crust/
+~/.crust/credentials
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+dump.sql
+
+# Temporary
+tmp/
+temp/
+*.tmp
+
+# OS
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# Documentation build output
+target/doc/
+site/
+
+# Root-level markdown files (keep README.md, docs/, .github/)
+/*.md
+!README.md
+
+# Test artifacts
+test-repos/
+test-*.crust/
+
+agents/
+prompts/
+instructions/
+skills/
+reasonings/
+copilot-instructions.md
+workflows/

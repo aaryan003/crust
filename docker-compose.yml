@@ -1,0 +1,65 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: crust-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-crust_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-crust_password}
+      POSTGRES_DB: ${POSTGRES_DB:-crust}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - crust_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-crust_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crust-server
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-crust_user}:${POSTGRES_PASSWORD:-crust_password}@db:5432/${POSTGRES_DB:-crust}
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-here-minimum-64-characters-long}
+      PORT: ${PORT:-8080}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      REPO_BASE_PATH: ${REPO_BASE_PATH:-/data/repos}
+      JWT_EXPIRY_SECONDS: ${JWT_EXPIRY_SECONDS:-86400}
+      ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-true}
+      RUST_LOG: ${RUST_LOG:-crust_server=info,tower_http=debug}
+    ports:
+      - "${PORT:-8080}:8080"
+    volumes:
+      - crust_repos:/data/repos
+    networks:
+      - crust_network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  postgres_data:
+    driver: local
+  crust_repos:
+    driver: local
+
+networks:
+  crust_network:
+    driver: bridge
