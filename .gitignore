@@ -60,6 +60,6 @@ agents/
 prompts/
 instructions/
 skills/
-reasoning/
+reasoning_arv/
 copilot-instructions.md
 workflows/
