@@ -55,3 +55,14 @@ site/
 # Test artifacts
 test-repos/
 test-*.crust/
+<<<<<<< HEAD
+=======
+
+agents/
+prompts/
+instructions/
+skills/
+reasoning_arv/
+copilot-instructions.md
+workflows/
+>>>>>>> upstream/main

@@ -279,6 +279,16 @@ enum Commands {
         #[arg(short = 'v', long)]
         verbose: bool,
     },
+<<<<<<< HEAD
+=======
+
+    /// Resolve a reference and print its commit ID
+    RevParse {
+        /// Reference to resolve (HEAD, branch name, or commit SHA)
+        #[arg(value_name = "REF")]
+        reference: String,
+    },
+>>>>>>> upstream/main
 }
 
 #[derive(Subcommand)]
@@ -398,6 +408,11 @@ fn main() {
 
         Some(Commands::VerifyPack { path, verbose }) => commands::cmd_verify_pack(verbose, path.as_deref()),
 
+<<<<<<< HEAD
+=======
+        Some(Commands::RevParse { reference }) => commands::cmd_rev_parse(&reference),
+
+>>>>>>> upstream/main
         None => {
             println!("Use 'crust --help' for usage information");
             Ok(())

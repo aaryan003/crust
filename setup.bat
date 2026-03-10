@@ -157,4 +157,8 @@ echo     4. crust commit -m "first commit"
 echo     5. crust push
 echo.
 
+<<<<<<< HEAD
 endlocal
+=======
+endlocal
+>>>>>>> upstream/main

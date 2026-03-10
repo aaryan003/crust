@@ -19,6 +19,10 @@ pub mod pull;
 pub mod push;
 pub mod remote;
 pub mod restore;
+<<<<<<< HEAD
+=======
+pub mod rev_parse;
+>>>>>>> upstream/main
 pub mod show;
 pub mod status;
 pub mod verify_pack;
@@ -44,6 +48,10 @@ pub use pull::cmd_pull;
 pub use push::cmd_push;
 pub use remote::{cmd_remote_add, cmd_remote_list, cmd_remote_remove, cmd_remote_rename, cmd_remote_set_url};
 pub use restore::cmd_restore;
+<<<<<<< HEAD
+=======
+pub use rev_parse::cmd_rev_parse;
+>>>>>>> upstream/main
 pub use show::cmd_show;
 pub use status::cmd_status;
 pub use verify_pack::cmd_verify_pack;
